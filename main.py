@@ -123,7 +123,7 @@ class Pulse2Screen(Screen):
         
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
         
-        instructions = Label(
+        self.instructions = Label(
             text='Haz 30 sentadillas en 45 segundos',
             size_hint=(1, 0.3),
             halign='center'
@@ -134,7 +134,7 @@ class Pulse2Screen(Screen):
             font_size='30sp'
         )
         
-        start_button = Button(
+        self.start_button = Button(
             text='Comenzar ejercicio',
             size_hint=(1, 0.15),
             on_press=self.start_exercise
@@ -158,9 +158,9 @@ class Pulse2Screen(Screen):
             disabled=True
         )
         
-        layout.add_widget(instructions)
+        layout.add_widget(self.instructions)
         layout.add_widget(self.timer)
-        layout.add_widget(start_button)
+        layout.add_widget(self.start_button)
         layout.add_widget(form)
         layout.add_widget(self.next_button)
         
@@ -168,15 +168,14 @@ class Pulse2Screen(Screen):
 
     def start_exercise(self, instance):
         def on_exercise_finish():
+            self.instructions.text = 'Ahora mide tu pulso durante 15 segundos'
+            self.start_button.disabled = True
             self.measure_pulse()
             
-        instance.disabled = True
+        self.start_button.disabled = True
         self.timer.start(45, on_exercise_finish)
         
     def measure_pulse(self):
-        instructions_label = self.children[0].children[-4]
-        instructions_label.text = 'Ahora mide tu pulso durante 15 segundos'
-        
         def on_pulse_finish():
             self.pulse_input.disabled = False
             self.next_button.disabled = False
@@ -200,7 +199,7 @@ class RestScreen(Screen):
         
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
         
-        instructions = Label(
+        self.instructions = Label(
             text='Descansando durante 30 segundos',
             size_hint=(1, 0.3),
             halign='center',
@@ -212,32 +211,39 @@ class RestScreen(Screen):
             font_size='30sp'
         )
         
-        start_button = Button(
+        # No necesitamos este botón ya que el temporizador iniciará automáticamente
+        # Pero lo mantenemos oculto para no cambiar demasiado la estructura
+        self.start_button = Button(
             text='Comenzar descanso',
             size_hint=(1, 0.15),
-            on_press=self.start_timer
+            on_press=self.start_timer,
+            opacity=0,
+            disabled=True
         )
         
         self.next_button = Button(
             text='Siguiente',
             size_hint=(1, 0.2),
             on_press=self.next_screen,
-            disabled=True
+            disabled=True,
+            opacity=0  # Oculto ya que pasaremos automáticamente
         )
         
-        layout.add_widget(instructions)
+        layout.add_widget(self.instructions)
         layout.add_widget(self.timer)
-        layout.add_widget(start_button)
+        layout.add_widget(self.start_button)
         layout.add_widget(self.next_button)
         
         self.add_widget(layout)
+    
+    def on_enter(self):
+        # Inicia el temporizador automáticamente cuando se entra a esta pantalla
+        self.start_timer(None)
 
     def start_timer(self, instance):
         def on_finish():
             self.next_screen(None)
             
-        self.next_button.disabled = True
-        instance.disabled = True
         self.timer.start(30, on_finish)
     
     def next_screen(self, instance):
