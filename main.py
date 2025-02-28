@@ -120,7 +120,6 @@ class Pulse2Screen(Screen):
         super().__init__(**kwargs)
         self.p1 = 0
         self.age = 0
-        self.disable = True
         
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
         
@@ -134,7 +133,15 @@ class Pulse2Screen(Screen):
             size_hint=(1, 0.15),
             font_size='30sp'
         )
-
+        
+        start_button = Button(
+            text='Comenzar ejercicio',
+            size_hint=(1, 0.15),
+            on_press=self.start_exercise
+        )
+        
+        form = BoxLayout(orientation='vertical', size_hint=(1, 0.2))
+        form.add_widget(Label(text='Número de pulsaciones después del ejercicio:'))
         self.pulse_input = TextInput(
             multiline=False,
             input_filter='int',
@@ -142,12 +149,7 @@ class Pulse2Screen(Screen):
             height='40dp',
             disabled=True
         )
-
-        start_button = Button(
-            text='Comenzar ejercicio',
-            size_hint=(1, 0.15),
-            on_press=self.start_timer
-        )
+        form.add_widget(self.pulse_input)
         
         self.next_button = Button(
             text='Siguiente',
@@ -159,39 +161,47 @@ class Pulse2Screen(Screen):
         layout.add_widget(instructions)
         layout.add_widget(self.timer)
         layout.add_widget(start_button)
-        layout.add_widget(self.pulse_input)
+        layout.add_widget(form)
         layout.add_widget(self.next_button)
         
         self.add_widget(layout)
 
-    def start_timer(self, instance):
-        def on_finish():
-            self.next_button.disabled = False
-            instance.disabled = False
-            self.disable = False
+    def start_exercise(self, instance):
+        def on_exercise_finish():
+            self.measure_pulse()
             
-        self.next_button.disabled = True
         instance.disabled = True
-        self.timer.start(45, on_finish)
+        self.timer.start(45, on_exercise_finish)
+        
+    def measure_pulse(self):
+        instructions_label = self.children[0].children[-4]
+        instructions_label.text = 'Ahora mide tu pulso durante 15 segundos'
+        
+        def on_pulse_finish():
+            self.pulse_input.disabled = False
+            self.next_button.disabled = False
+            
+        self.timer.start(15, on_pulse_finish)
     
     def next_screen(self, instance):
-        pulse_value2 = int(self.pulse_input.text)
-        self.manager.get_screen('rest').pulse_value2 = pulse_value2
-        self.manager.get_screen('rest').pulse_value = self.pulse_value
-        self.manager.get_screen('rest').p1 = self.p1
-        self.manager.get_screen('rest').age = self.age
-        self.manager.current = 'rest'
+        if self.pulse_input.text:
+            p2 = int(self.pulse_input.text)
+            self.manager.get_screen('rest').p1 = self.p1
+            self.manager.get_screen('rest').p2 = p2
+            self.manager.get_screen('rest').age = self.age
+            self.manager.current = 'rest'
 
 class RestScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.p1 = 0
+        self.p2 = 0
         self.age = 0
         
         layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
         
         instructions = Label(
-            text='Descansando',
+            text='Descansando durante 30 segundos',
             size_hint=(1, 0.3),
             halign='center',
             font_size='24sp'
@@ -224,8 +234,7 @@ class RestScreen(Screen):
 
     def start_timer(self, instance):
         def on_finish():
-            self.next_button.disabled = False
-            instance.disabled = False
+            self.next_screen(None)
             
         self.next_button.disabled = True
         instance.disabled = True
@@ -233,6 +242,7 @@ class RestScreen(Screen):
     
     def next_screen(self, instance):
         self.manager.get_screen('pulse3').p1 = self.p1
+        self.manager.get_screen('pulse3').p2 = self.p2
         self.manager.get_screen('pulse3').age = self.age
         self.manager.current = 'pulse3'
 
@@ -316,7 +326,9 @@ class ResultsScreen(Screen):
         self.result_label = Label(
             text='',
             size_hint=(1, 0.7),
-            halign='center'
+            halign='center',
+            valign='middle',
+            text_size=(400, None)
         )
         
         restart_button = Button(
