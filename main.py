@@ -8,7 +8,7 @@ from kivy.core.window import Window
 from kivy.uix.gridlayout import GridLayout
 from seconds import Seconds
 from functions import *
-
+from runner import *
 class WelcomeScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -139,6 +139,8 @@ class Pulse2Screen(Screen):
             size_hint=(1, 0.15),
             on_press=self.start_exercise
         )
+
+        self.run = Runner(total=30, stepTime=1.5)
         
         form = BoxLayout(orientation='vertical', size_hint=(1, 0.2))
         form.add_widget(Label(text='Número de pulsaciones después del ejercicio:'))
@@ -159,6 +161,7 @@ class Pulse2Screen(Screen):
         )
         
         layout.add_widget(self.instructions)
+        layout.add_widget(self.run)
         layout.add_widget(self.timer)
         layout.add_widget(self.start_button)
         layout.add_widget(form)
@@ -173,7 +176,9 @@ class Pulse2Screen(Screen):
             self.measure_pulse()
             
         self.start_button.disabled = True
+        self.run.start()
         self.timer.start(45, on_exercise_finish)
+        
         
     def measure_pulse(self):
         def on_pulse_finish():
@@ -374,4 +379,4 @@ class RuffierApp(App):
         return sm
 
 if __name__ == '__main__':
-    RuffierApp().run()
+    RuffierApp().run()  
